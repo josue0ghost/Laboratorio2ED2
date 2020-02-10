@@ -8,29 +8,30 @@ using Laborarorio2.Interface;
 
 namespace Laborarorio2.Object
 {
-	public class Objeto : IComparable, IFixedSizeText
+	public class Bebida : IComparable, IFixedSizeText
 	{
-		public int Id { get; set; }
+		public string Nombre { get; set; }
+		public string Sabor { get; set; }
+		public double Volumen { get; set; }
+		public double Precio { get; set; }
+		public string CasaProductora { get; set; }
 
 		public int CompareTo(object obj)
 		{
-			var s2 = (Objeto)obj;
-			return Id.CompareTo(s2.Id);
+			var s2 = (Bebida)obj;
+			return Nombre.CompareTo(s2.Nombre);
 		}
 
-		public int FixedSize { get { return 10; } }
+		public int FixedSize { get { return 99; } }
 
 		public string ToFixedSizeString()
 		{
-			return $"{Id.ToString("0000000000;-000000000")}";
+			return $"{string.Format("{0,-25}", Nombre)}~" +
+				$"{string.Format("{0,-25}", Sabor)}~" + 
+				$"{Volumen.ToString("0000000000;-0000000000")}~" +
+				$"{Precio.ToString("0000000000;-0000000000")}~" +
+				$"{string.Format("{0,-25}", CasaProductora)}";
 		}
-
-		//public string ToFixedSizeString()
-		//{
-		//	return $"{Id.ToString("00000000000;-0000000000")}~{string.Format("{0,-20}", Nombre)}~" +
-		//		   $"{string.Format("{0,-20}", Year)}~{string.Format("{0,-20}", Genero)}~" +
-		//		   $"{string.Format("{0,-20}", Tipo)}";
-		//}
 
 		public int FixedSizeText
 		{
