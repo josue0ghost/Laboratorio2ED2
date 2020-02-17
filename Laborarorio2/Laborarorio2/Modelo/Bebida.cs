@@ -39,11 +39,14 @@ namespace Laborarorio2.Object
 			get { return FixedSize; }
 		}
 
-		//public override string ToString()
-		//{
-		//    return string.Format("ID: {0}\r\nNombre: {1}\r\nAño: {2}\r\nGénero: {3}\r\nTipo: {4}\r\n"
-		//        , Id.ToString("00000000000;-0000000000"), string.Format("{0,-20}", Nombre)
-		//        , string.Format("{0,-20}", Year), string.Format("{0,-20}", Genero), string.Format("{0,-50}", Tipo));
-		//}
+		public override string ToString()
+		{
+			return string.Format("Nombre: {0}\r\nSabor: {1}\r\nVolumen: {2}\r\nPrecio: {3}\r\nCasa Productora: {4}"
+				, string.Format("{0,-25}", Nombre)
+				, string.Format("{0,-25}", Sabor)
+				, Volumen.ToString("0000000000;-0000000000")
+				, Precio.ToString("00000000000;-0000000000")
+				, string.Format("{0,-25}", CasaProductora));
+		}
 	}
 }
