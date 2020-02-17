@@ -5,10 +5,10 @@ using System.Threading.Tasks;
 
 namespace Laborarorio2.Utilities
 {
-	public class Utilities
+	class Util
 	{
 		public static int IntegerSize = 10;
-		public static int NullPointer = int.MinValue;
+		public static int NullPointer = -1;
 		public static char Separator = '|';
 	}
 }

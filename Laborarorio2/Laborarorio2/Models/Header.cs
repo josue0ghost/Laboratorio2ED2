@@ -2,8 +2,9 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
+using Laborarorio2.Utilities;
 
-namespace Laborarorio2.Modelo
+namespace Laborarorio2.Models
 {
 	public class Header
 	{
@@ -15,8 +16,8 @@ namespace Laborarorio2.Modelo
 
 		public string ToFixedSizeString()
 		{
-			return $"{Root.ToString("0000000000;-000000000")}|"
-				+ $"{Order.ToString("0000000000;-000000000")}|"
+			return $"{Root.ToString("0000000000;-000000000")}" + Util.Separator.ToString()
+				+ $"{Order.ToString("0000000000;-000000000")}" + Util.Separator.ToString()
 				+ $"{NextPosition.ToString("0000000000;-000000000")}\r\n";
 		}
 

@@ -6,7 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Laborarorio2.Interface;
 
-namespace Laborarorio2.Object
+namespace Laborarorio2.Models
 {
 	public class Bebida : IComparable, IFixedSizeText
 	{
