@@ -18,6 +18,11 @@ namespace Laborarorio2.Tree
 		internal int ID { get; set; }
 		internal int Order { get; set; }
 
+		public Node()
+		{
+
+		}
+
 		internal Node(int order, int position, int father, ICreateFixedSizeText<T> createFixedSizeText)
 		{
 			if (order < 0)
