@@ -171,7 +171,9 @@ namespace Laborarorio2.Tree
 
 			T ToUpdata = createFixedSizeText.CreateNull();
 
-			node.SplitNode(data, Right, NewNode, ToUpdata, createFixedSizeText);
+			//node.SplitNode(data, Right, NewNode, ToUpdata, createFixedSizeText);			
+			split(node, data);
+			
 
 			Node<T> NodeChildern = null;
 			for (int i = 0; i < NewNode.Children.Count; i++)
@@ -212,6 +214,65 @@ namespace Laborarorio2.Tree
 				Node<T> Father = new Node<T>();
 				Father.ReadNode(this.Path, this.Order, this.Root, node.Father, createFixedSizeText);
 				UpData(Father, data, NewNode.Position);
+			}
+		}
+
+		private void split(Node<T> node, T data) {
+			List<T> aux = node.Data;
+			aux.Add(data);
+			int next = 0;
+			Node<T> Father = new Node<T>();
+			Father.ReadNode(this.Path, this.Order, this.Root, node.Father, createFixedSizeText);
+
+			for (int i = 0; i < Father.Children.Count; i++)
+			{
+				if (Father.Children[i] == node.ID)
+				{
+					next = Father.Children[i + 1];
+				}
+				break; 
+			}
+
+			Node<T> auxC = new Node<T>();
+			auxC.ReadNode(this.Path, this.Order, this.Root, next, createFixedSizeText);
+			if (!auxC.Full) //si el hermano tiene espacio
+			{
+				//agregar el último elemento de la lista 
+				int insert = node.AproxPosition(data);
+
+				// Correr datos
+				for (int i = auxC.Data.Count - 1; i > insert; i--)
+				{
+					auxC.Data[i] = auxC.Data[i - 1];
+				}
+				auxC.Data[insert] = data;
+				Father.InsertData(data);
+
+				aux.RemoveAt(aux.Count - 1);
+				node.Data = aux;
+			}
+			else
+			{
+				int limit = (2/3) * (Order - 1);				
+				List<T> allChildren = new List<T>();
+				allChildren.AddRange(node.Data);				
+				allChildren.AddRange(auxC.Data);
+				Node<T> newChild = new Node<T>(this.Order, next + 1, node.Father, createFixedSizeText);
+
+				node.Data = new List<T>();
+				auxC.Data = new List<T>();
+				for (int i = 0; i < limit; i++)
+				{
+					node.Data.Add(allChildren[i]);
+					auxC.Data.Add(allChildren[i + limit + 1]);
+					newChild.Data.Add(allChildren[i + limit*2 + 2]);
+				}
+
+				newChild.WriteNodeOnDisk(this.Path);				
+
+				Father.InsertData(allChildren[limit]);
+				Father.InsertData(allChildren[limit*2 + 1]);
+
 			}
 		}
 
