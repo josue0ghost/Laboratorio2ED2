@@ -322,7 +322,7 @@ namespace Laborarorio2.Tree
 
 		internal bool Underflow
 		{
-			get { return (CountData < (Order / 2) - 1); }
+			get { return (CountData < (Order / 2) - 1); }		
 		}
 
 		internal bool Full

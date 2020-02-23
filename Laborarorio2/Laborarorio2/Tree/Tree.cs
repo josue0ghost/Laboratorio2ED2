@@ -11,7 +11,7 @@ using System.Text;
 namespace Laborarorio2.Tree
 {
 
-    public class Tree<T, K> where T : IComparable, IFixedSizeText
+    public class Tree<T> where T : IComparable, IFixedSizeText
     {
         internal int Order { get; set; }
         internal int Root { get; set; }
