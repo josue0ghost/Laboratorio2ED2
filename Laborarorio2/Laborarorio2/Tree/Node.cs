@@ -39,16 +39,37 @@ namespace Laborarorio2.Tree
 		private void ClearNode(ICreateFixedSizeText<T> createFixedSizeText)
 		{
 			Children = new List<int>();
-			for (int i = 0; i < Order; i++)
-			{
-				Children.Add(Util.NullPointer);
-			}
-
 			Data = new List<T>();
-			for (int i = 0; i < Order - 1; i++)
+
+			if (Father.Equals(Util.NullPointer))
 			{
-				Data.Add(createFixedSizeText.CreateNull());
+				int max = (4 * (Order - 1)) / 3;
+				for (int i = 0; i < max + 1; i++)
+				{
+					Children.Add(Util.NullPointer);
+				}
+
+				for (int i = 0; i < max; i++)
+				{
+					Data.Add(createFixedSizeText.CreateNull());
+				}
 			}
+			else
+			{
+				for (int i = 0; i < Order; i++)
+				{
+					Children.Add(Util.NullPointer);
+				}
+
+				for (int i = 0; i < Order - 1; i++)
+				{
+					Data.Add(createFixedSizeText.CreateNull());
+				}
+			}
+			
+
+			
+			
 		}
 
 		internal int FixedSize (int Father)
@@ -95,20 +116,46 @@ namespace Laborarorio2.Tree
 		private string ChildrensFormat(int Order)
 		{
 			string Children = "";
-			for (int i = 0; i < Order; i++)
+			int max = (4 * (Order - 1)) / 3;
+
+			if (Father.Equals(Util.NullPointer))
 			{
-				Children = Children + $"{this.Children[i].ToString("0000000000;-000000000")}" + Util.Separator.ToString(); // 10 caracteres + 1
+				for (int i = 0; i < max + 1; i++)
+				{
+					Children = Children + $"{this.Children[i].ToString("0000000000;-000000000")}" + Util.Separator.ToString(); // 10 caracteres + 1
+				}
 			}
+			else
+			{
+				for (int i = 0; i < Order; i++)
+				{
+					Children = Children + $"{this.Children[i].ToString("0000000000;-000000000")}" + Util.Separator.ToString(); // 10 caracteres + 1
+				}
+			}
+			
 			return Children;
 		}
 
 		private string DataFormat(int Order)
 		{
 			string values = null;
-			for (int i = 0; i < Order - 1; i++)
+			int max = (4 * (Order - 1)) / 3;
+
+			if (Father.Equals(Util.NullPointer))
 			{
-				values = values + $"{Data[i].ToFixedSizeString()}" + Util.Separator.ToString(); // FixedSize del T + 1
+				for (int i = 0; i < max; i++)
+				{
+					values = values + $"{Data[i].ToFixedSizeString()}" + Util.Separator.ToString(); // FixedSize del T + 1
+				}
 			}
+			else
+			{
+				for (int i = 0; i < Order - 1; i++)
+				{
+					values = values + $"{Data[i].ToFixedSizeString()}" + Util.Separator.ToString(); // FixedSize del T + 1
+				}
+			}
+			
 			return values;
 		}
 
