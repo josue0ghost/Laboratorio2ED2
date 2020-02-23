@@ -21,15 +21,17 @@ namespace Laborarorio2.Controllers
 
         // GET: api/Bebida/5
         [HttpGet("{id}", Name = "Get")]
-        public string Get(int id)
+        public Bebida Get(string id)
         {
-            return "value";
+            //return Data.Instance.myTree.Obtain(id);
+            return new Bebida();
         }
 
         // POST: api/Bebida
         [HttpPost]
-        public void Post([FromBody] string value)
+        public void Post([FromBody] Bebida value)
         {
+            Data.Instance.myTree.Add(value);
         }
 
         // PUT: api/Bebida/5
