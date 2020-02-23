@@ -11,7 +11,7 @@ using System.Text;
 namespace Laborarorio2.Tree
 {
 
-    public class Tree<T> where T : IComparable, IFixedSizeText
+    public class Tree<T, K> where T : IComparable, IFixedSizeText
     {
         internal int Order { get; set; }
         internal int Root { get; set; }
@@ -102,7 +102,7 @@ namespace Laborarorio2.Tree
 			{
 				Order = Order,
 				Father = int.MinValue, // es la raiz actual
-				Position = 1
+				ID = 1
 			};
 
 			node.Data = new List<T>();
@@ -118,7 +118,7 @@ namespace Laborarorio2.Tree
 				node.Data.Add(createFixedSizeText.CreateNull());
 			}
 
-			this.Root = node.Position;
+			this.Root = node.ID;
 			this.LastPosition++;
 
 			return node;
@@ -159,7 +159,162 @@ namespace Laborarorio2.Tree
 
 		private void UpData(Node<T> node, T data, int Right)
 		{
-			if (!node.Full)
+			if (node.Full)
+			{
+				Node<T> nFather = null;
+				nFather.ID = node.Father;
+				nFather.ReadNode(this.Path, this.Order, this.Root, node.Father, createFixedSizeText);
+
+				int position = 0;
+				for (int i = 0; i < nFather.Children.Count(); i++)
+				{
+					if (nFather.Children[i] == node.ID)
+					{
+						position = i;
+						break;
+					}
+				}
+
+				Node<T> tempNode = null;
+				// del nodo a la derecha
+				if (nFather.Children[position + 1] != Util.NullPointer)
+				{
+					tempNode.ReadNode(this.Path, this.Order, this.Root, nFather.Children[position + 1], createFixedSizeText);
+					if (!tempNode.Full)
+					{
+						node.Data.Add(data);    // se inserta en el nodo que es
+						node.Data.Sort();
+						T tempData = node.Data[node.Data.Count() - 1]; // el dato que va a subir al padre
+						node.Data.Remove(tempData); // remuevo el dato porque ya lo guarde
+						node.WriteNodeOnDisk(this.Path);
+
+						T tempData2 = nFather.Data[position];// dato del padre que va a bajar al hijo derecho
+						nFather.Data.Insert(position, tempData2); // se inserta el dato en el padre en la posición correcta
+
+						tempNode.Data.Insert(0, data); // se inserta al inicio de la lista el dato que baje del padre
+
+						tempNode.WriteNodeOnDisk(this.Path); //guardo los cambios
+
+						return;
+					}
+				}
+				// del nodo a la izquierda
+				if (position > 0)
+				{
+					tempNode.ReadNode(this.Path, this.Order, this.Root, nFather.Children[position - 1], createFixedSizeText);
+					if (!tempNode.Full)
+					{
+						node.Data.Add(data);    // se inserta en el nodo que es
+						node.Data.Sort();
+						T tempData = node.Data[0]; // el dato que va a subir al padre
+						node.Data.Remove(tempData); // remuevo el dato porque ya lo guarde
+						node.WriteNodeOnDisk(this.Path);
+
+						T tempData2 = nFather.Data[position - 1];// dato del padre que va a bajar al hijo izquierdo
+						nFather.Data.Insert(position - 1, tempData2); // se inserta el dato en el padre en la posición correcta
+
+						tempNode.Data.Add(data); // se inserta al inicio de la lista el dato que baje del padre
+
+						tempNode.WriteNodeOnDisk(this.Path); //guardo los cambios
+
+						return;
+					}
+				}
+
+				// hay que unir los hermanos con el padre y separarlos
+				List<T> SuperNode = new List<T>();
+				foreach (var item in node.Data)
+				{
+					SuperNode.Add(item); // añado todos los items del nodo actual
+				}
+
+				if (nFather.Children[position + 1] != Util.NullPointer) // si es por nodo derecho
+				{
+					SuperNode.Add(nFather.Data[position]);// añado la raíz en común al super nodo
+					tempNode.ReadNode(this.Path, this.Order, this.Root, nFather.Children[position + 1], createFixedSizeText);
+				}
+				else if (position > 0) // si es por nodo izquierdo
+				{
+					SuperNode.Add(nFather.Data[position - 1]); // añado la raíz en común al super nodo
+					tempNode.ReadNode(this.Path, this.Order, this.Root, nFather.Children[position - 1], createFixedSizeText);
+				}
+
+				foreach (var item in tempNode.Data) // añado los items del hermano al super nodo
+				{
+					SuperNode.Add(item);
+				}
+
+				SuperNode.Add(data); // añado el dato a insertar y ordeno
+				SuperNode.Sort();
+
+				int Min = (2 * (this.Order - 1)) / 3;
+				node.Data.Clear();
+				tempNode.Data.Clear();
+				int count = 0;
+				for (int i = 0; i < this.Order - 1; i++)
+				{
+					// datos al nodo original
+					if (count < Min)
+					{
+						node.Data.Add(SuperNode[i]);
+					}
+					else
+					{
+						node.Data.Add(createFixedSizeText.CreateNull());
+					}
+					count++;
+				}
+
+				// se agregan los datos a las posiciones correspondientes en el padre
+				nFather.Data.Insert(position, SuperNode[Min]);
+				nFather.Data.Insert(position + 1, SuperNode[(Min * 2) + 1]);
+
+				count = 0;
+				for (int i = 0; i < this.Order - 1; i++)
+				{
+					// datos al nodo hermano
+					if (count < Min)
+					{
+						tempNode.Data.Add(SuperNode[i + Min + 1]);
+					}
+					else
+					{
+						tempNode.Data.Add(createFixedSizeText.CreateNull());
+					}
+					count++;
+				}
+				count = 0;
+				Node<T> newNode = null;
+				newNode.Father = nFather.ID;
+				newNode.ID = LastPosition;
+				LastPosition++; // actualizacion de ultima posicion disponible
+				// datos al nuevo nodo
+				for (int i = 0; i < this.Order - 1; i++)
+				{
+					if (count < Min)
+					{
+						newNode.Data.Add(SuperNode[i + (2 * Min) + 2]);
+					}
+					else
+					{
+						newNode.Data.Add(createFixedSizeText.CreateNull());
+					}
+				}
+				// hijos del nuevo nodo
+				for (int i = 0; i < this.Order; i++)
+				{
+					newNode.Children.Add(Util.NullPointer);
+				}
+
+				// escritura de nodos
+				node.WriteNodeOnDisk(this.Path);
+				tempNode.WriteNodeOnDisk(this.Path);
+				nFather.WriteNodeOnDisk(this.Path);
+				newNode.WriteNodeOnDisk(this.Path);
+				// como se agregó un nuevo nodo, hay que actualizar el header
+				WriteHeader();
+			}
+			else
 			{
 				node.InsertData(data);
 				node.WriteNodeOnDisk(this.Path);
@@ -179,7 +334,7 @@ namespace Laborarorio2.Tree
 				if (NewNode.Children[i] != Util.NullPointer)
 				{
 					NodeChildern = NodeChildern.ReadNode(this.Path, this.Order, this.Root, NewNode.Children[i], createFixedSizeText);
-					NodeChildern.Father = NewNode.Position;
+					NodeChildern.Father = NewNode.ID;
 					NodeChildern.WriteNodeOnDisk(Path);
 				}
 				else
@@ -193,12 +348,12 @@ namespace Laborarorio2.Tree
 				Node<T> newRoot = new Node<T>(this.Order, this.LastPosition, Util.NullPointer, createFixedSizeText);
 				this.LastPosition++;
 
-				newRoot.Children[0] = node.Position;
-				newRoot.InsertData(data, NewNode.Position);
+				newRoot.Children[0] = node.ID;
+				newRoot.InsertData(data, NewNode.ID);
 
-				node.Father = newRoot.Position;
-				newRoot.Father = newRoot.Position;
-				this.Root = newRoot.Position;
+				node.Father = newRoot.ID;
+				newRoot.Father = newRoot.ID;
+				this.Root = newRoot.ID;
 
 				newRoot.WriteNodeOnDisk(this.Path);
 				node.WriteNodeOnDisk(this.Path);
@@ -211,7 +366,7 @@ namespace Laborarorio2.Tree
 
 				Node<T> Father = new Node<T>();
 				Father.ReadNode(this.Path, this.Order, this.Root, node.Father, createFixedSizeText);
-				UpData(Father, data, NewNode.Position);
+				UpData(Father, data, NewNode.ID);
 			}
 		}
 
