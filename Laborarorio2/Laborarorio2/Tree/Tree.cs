@@ -11,7 +11,7 @@ using System.Text;
 namespace Laborarorio2.Tree
 {
 
-    public class Tree<T, K> where T : IComparable, IFixedSizeText
+    public class Tree<T> where T : IComparable, IFixedSizeText
     {
         internal int Order { get; set; }
         internal int Root { get; set; }
@@ -19,18 +19,22 @@ namespace Laborarorio2.Tree
         internal int LastPosition { get; set; }
         internal FileStream File { get; set; }
 
-        private ICreateFixedSizeText<T> createFixedSizeText = null;
+		private ICreateFixedSizeText<T> createFixedSizeText = null;
 
         /// <summary>
         /// To create a new file. Creates a Header and the Root node
         /// </summary>
         /// <param name="Order"></param>
         /// <param name="Path"></param>
-        private Tree(int Order, string Path)
+        public Tree(int Order, string Path, ICreateFixedSizeText<T> createFixedSizeText)
         {
-            Header e = CreateHeader(Order);
-            Node<T> root = CreateNode(Order);
-
+			this.createFixedSizeText = createFixedSizeText;
+			this.Order = Order;
+			this.Path = Path;
+			Node<T> root = CreateNode(Order);
+			Header e = CreateHeader(Order);
+			this.LastPosition = e.NextPosition;
+			
             using (var fs = new FileStream(Path, FileMode.OpenOrCreate))
             {
                 fs.Write(ByteGenerator.ConvertToBytes(e.ToFixedSizeString()), 0, e.FixedSizeText);
@@ -45,7 +49,7 @@ namespace Laborarorio2.Tree
 		/// <param name="Order"></param>
 		/// <param name="Path"></param>
 		/// <param name="createFixedSizeText"></param>
-		public Tree(int Order, string Path, ICreateFixedSizeText<T> createFixedSizeText)
+		public Tree(int Order, string Path, ICreateFixedSizeText<T> createFixedSizeText, int c)
 		{
 			this.Order = Order;
 			this.Path = Path;
@@ -101,21 +105,21 @@ namespace Laborarorio2.Tree
 			Node<T> node = new Node<T>
 			{
 				Order = Order,
-				Father = int.MinValue, // es la raiz actual
+				Father = Util.NullPointer, // es la raiz actual
 				ID = 1
 			};
 
 			node.Data = new List<T>();
 			node.Children = new List<int>();
 
-			for (int i = 0; i < Order; i++)
+			for (int i = 0; i < (4*(Order-1))/3 + 1; i++)
 			{
-				node.Children.Add(int.MinValue);
+				node.Children.Add(Util.NullPointer);
 			}
 
-			for (int i = 0; i < Order - 1; i++)
+			for (int i = 0; i < (4*(Order - 1))/3; i++)
 			{
-				node.Data.Add(createFixedSizeText.CreateNull());
+				node.Data.Add(this.createFixedSizeText.CreateNull());
 			}
 
 			this.Root = node.ID;
@@ -159,9 +163,9 @@ namespace Laborarorio2.Tree
 
 		private void UpData(Node<T> node, T data, int Right)
 		{
-			if (node.Full)
+			if (node.Full && node.Father != Util.NullPointer)
 			{
-				Node<T> nFather = null;
+				Node<T> nFather = new Node<T>();
 				nFather.ID = node.Father;
 				nFather.ReadNode(this.Path, this.Order, this.Root, node.Father, createFixedSizeText);
 
@@ -175,7 +179,7 @@ namespace Laborarorio2.Tree
 					}
 				}
 
-				Node<T> tempNode = null;
+				Node<T> tempNode = new Node<T>();
 				// del nodo a la derecha
 				if (nFather.Children[position + 1] != Util.NullPointer)
 				{
@@ -314,7 +318,7 @@ namespace Laborarorio2.Tree
 				// como se agregó un nuevo nodo, hay que actualizar el header
 				WriteHeader();
 			}
-			else
+			else if (!node.Full)
 			{
 				node.InsertData(data);
 				node.WriteNodeOnDisk(this.Path);
@@ -328,7 +332,7 @@ namespace Laborarorio2.Tree
 
 			node.SplitNode(data, Right, NewNode, ToUpdata, createFixedSizeText);
 
-			Node<T> NodeChildern = null;
+			Node<T> NodeChildern = new Node<T>();
 			for (int i = 0; i < NewNode.Children.Count; i++)
 			{
 				if (NewNode.Children[i] != Util.NullPointer)
@@ -349,10 +353,12 @@ namespace Laborarorio2.Tree
 				this.LastPosition++;
 
 				newRoot.Children[0] = node.ID;
+				newRoot.Children[1] = NewNode.ID;
 				newRoot.InsertData(data, NewNode.ID);
 
 				node.Father = newRoot.ID;
-				newRoot.Father = newRoot.ID;
+				newRoot.Father = Util.NullPointer;
+				NewNode.Father = newRoot.ID;
 				this.Root = newRoot.ID;
 
 				newRoot.WriteNodeOnDisk(this.Path);

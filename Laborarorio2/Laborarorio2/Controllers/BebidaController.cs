@@ -12,10 +12,20 @@ namespace Laborarorio2.Controllers
     [ApiController]
     public class BebidaController : ControllerBase
     {
+        bool FirstTime = true;
         // GET: api/Bebida
         [HttpGet]
         public IEnumerable<string> Get()
         {
+            if (FirstTime)
+            {
+                Data.Instance.myTree = new Tree.Tree<Bebida>(7, "C://Users//Public//arbol.txt", new CreateObject());
+                FirstTime = false;
+            }
+            else
+            {
+                Data.Instance.myTree = new Tree.Tree<Bebida>(7, "C://Users//Public//arbol.txt", new CreateObject(), 0);
+            }
             return new string[] { "value1", "value2" };
         }
 

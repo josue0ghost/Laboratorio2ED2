@@ -16,6 +16,7 @@ namespace Laborarorio2.Tree
 		internal int Father { get; set; }
 		internal int ID { get; set; }
 		internal int Order { get; set; }
+		internal ICreateFixedSizeText<T> createFixedSizeText = null;
 
 		public Node()
 		{
@@ -31,7 +32,7 @@ namespace Laborarorio2.Tree
 			this.Order = order;
 			this.ID = ID;
 			this.Father = father;
-
+			this.createFixedSizeText = createFixedSizeText;
 			ClearNode(createFixedSizeText);
 		}
 
@@ -74,7 +75,7 @@ namespace Laborarorio2.Tree
 			InTextSize += Util.IntegerSize + 1; // Posición
 			InTextSize += Util.IntegerSize + 1; // Padre
 
-			if (Father == -1)
+			if (Father == Util.NullPointer)
 			{
 				InTextSize += (Data[0].FixedSize + 1) * ((4 * (Order - 1)) / 3); //Data
 				InTextSize += (Util.IntegerSize + 1) * ((4 * (Order - 1)) / 3) + (Util.IntegerSize + 1);	// Children
@@ -99,7 +100,7 @@ namespace Laborarorio2.Tree
 		{
 			if (ID <= Root)
 			{
-				return Header.FixedSize + (ID * FixedSizeText());
+				return Header.FixedSize + ((ID - 1) * FixedSizeText());
 			}
 			else
 			{
@@ -166,14 +167,20 @@ namespace Laborarorio2.Tree
 		#region Read n' Write
 		internal Node<T> ReadNode(string Path, int Order, int Root, int ID, ICreateFixedSizeText<T> createFixedSizeText)
 		{
-			Node<T> node = new Node<T>(Order, ID, 0, createFixedSizeText);
-			node.Data = new List<T>();
+			int Father = 0;
+			if (ID == Root)
+			{
+				Father = Util.NullPointer;
+			}
+
+			Node<T> node = new Node<T>(Order, ID, Father, createFixedSizeText);
 
 			int HeaderSize = Header.FixedSize;
 			byte[] buffer;
+
 			if (ID <= Root)
 			{
-				node.Father = 0;
+				
 				buffer = new byte[node.FixedSize(node.Father)];
 				using (var fs = new FileStream(Path, FileMode.OpenOrCreate))
 				{
@@ -183,7 +190,6 @@ namespace Laborarorio2.Tree
 			}
 			else
 			{
-				node.Father = 0;
 				buffer = new byte[node.FixedSize(node.Father)];
 				using (var fs = new FileStream(Path, FileMode.OpenOrCreate))
 				{
@@ -203,34 +209,38 @@ namespace Laborarorio2.Tree
 
 			int DataLimit = Order;
 
-			if (this.Father.Equals(Util.NullPointer))
+			if (node.Father.Equals(Util.NullPointer))
 			{
 				DataLimit = (4 * (Order - 1)) / 3;
-
-				for (int i = 2; i < DataLimit + 3; i++)
+				int j = 0;
+				for (int i = 2; i < DataLimit + 2; i++)
 				{
-					node.Children.Add(Convert.ToInt32(Values[i]));
+					node.Data[j] = createFixedSizeText.Create(Values[i]);
+					j++;
 				}
-
-				int StartLimit = node.Children.Count + 3;
-				//Valores
-				for (int i = StartLimit; i < DataLimit; i++)
+				j = 0;
+				int StartLimit = node.Data.Count + 2;
+				for (int i = StartLimit; i < Values.Length-1; i++)
 				{
-					node.Data[i] = createFixedSizeText.Create(Values[i]);
+					node.Children[j] = Convert.ToInt32(Values[i]);
+					j++;
 				}
 			}
 			else
 			{
-				for (int i = 2; i < DataLimit + 2; i++)
+				int j = 0;
+				for (int i = 2; i < DataLimit + 1; i++)
 				{
-					node.Children.Add(Convert.ToInt32(Values[i]));
+					node.Data[j] = createFixedSizeText.Create(Values[i]);
+					j++;
 				}
-
-				int StartLimit = node.Children.Count + 3;
+				j = 0;
+				int StartLimit = node.Data.Count + 2;
 				//Valores
-				for (int i = StartLimit; i < DataLimit; i++)
+				for (int i = StartLimit; i < Values.Length-1; i++)
 				{
-					node.Data[i] = createFixedSizeText.Create(Values[i]);
+					node.Children[i] = Convert.ToInt32(Values[i]);
+					j++;
 				}
 			}
 			
@@ -260,7 +270,7 @@ namespace Laborarorio2.Tree
 			int position = Data.Count;
 			for (int i = 0; i < Data.Count; i++)
 			{
-				if ((Data[i].CompareTo(data) < 0) || (Data[i].CompareTo(Util.NullPointer) == 0))
+				if ((Data[i].CompareTo(data) < 0) || (Data[i].CompareTo(createFixedSizeText.CreateNull()) == 0))
 				{
 					position = i; break;
 				}
@@ -293,10 +303,6 @@ namespace Laborarorio2.Tree
 			if (Full && ValidateIfFull)
 			{
 				throw new ArgumentOutOfRangeException("El nodo está lleno");
-			}
-			if (data.CompareTo(Util.NullPointer) == 0)
-			{
-				throw new ArgumentNullException("Dato con valor asignado igual al valor nulo predeterminado");
 			}
 
 			int PositionToInsert = AproxPosition(data);
@@ -358,14 +364,14 @@ namespace Laborarorio2.Tree
 				InsertData(data, Right, false);
 
 				// Dato a subir
-				Middle = (2 * (Order - 1)) / 3;
+				Middle = Data.Count / 2;
 
 				ToUpData = Data[Middle];
 				Data[Middle] = createFixedSizeText.CreateNull();
 
 				// Llenar datos que suben
 				int j = 0;
-				for (int i = Middle + 1; i < Children.Count; i++)
+				for (int i = Middle + 1; i < Data.Count; i++)
 				{
 					Node.Data[j] = Data[i];
 					Data[i] = createFixedSizeText.CreateNull();
@@ -394,7 +400,7 @@ namespace Laborarorio2.Tree
 				InsertData(data, Right, false);
 
 				// Dato a subir
-				Middle = (2 * (Order - 1)) / 3;
+				Middle = Data.Count / 2;
 
 				ToUpData = Data[Middle];
 				Data[Middle] = createFixedSizeText.CreateNull();
@@ -429,7 +435,7 @@ namespace Laborarorio2.Tree
 			get
 			{
 				int i = 0;
-				while (i < Data.Count && Data[i] != null)
+				while (i < Data.Count && Data[i].CompareTo(createFixedSizeText.CreateNull()) != 0)
 				{
 					i++;
 				}
@@ -444,7 +450,14 @@ namespace Laborarorio2.Tree
 
 		internal bool Full
 		{
-			get { return (CountData >= Order - 1); }
+			get 
+			{
+				if (this.Father.Equals(Util.NullPointer))
+				{
+					return (CountData >= (4 * (Order - 1)) / 3);
+				}
+				return (CountData >= Order - 1); 
+			}
 		}
 
 		internal bool IsLeaf

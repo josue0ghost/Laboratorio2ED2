@@ -19,6 +19,6 @@ namespace Laborarorio2.Models
 			}
 		}
 
-		public Tree<Bebida> myTree = new Tree<Bebida>(7, "", new CreateObject());	
+		public Tree<Bebida> myTree;	
 	}
 }
